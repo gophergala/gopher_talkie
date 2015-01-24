@@ -3,6 +3,8 @@ package app
 import (
 	_ "fmt"
 	"github.com/codegangsta/cli"
+	"github.com/gophergala/gopher_talkie/common"
+
 	"os"
 )
 
@@ -12,7 +14,8 @@ const (
 )
 
 type App struct {
-	app *cli.App
+	app  *cli.App
+	user *common.User
 }
 
 func NewApp() *App {
@@ -30,11 +33,12 @@ func NewApp() *App {
 	app.Commands = []cli.Command{
 		NewListCommand(this),
 		NewSendCommand(this),
-		NewListenCommand(this),
+		NewPlayCommand(this),
 		NewDeleteCommand(this),
 	}
 
 	this.app = app
+
 	return this
 }
 

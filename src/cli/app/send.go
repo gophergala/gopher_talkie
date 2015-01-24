@@ -28,10 +28,19 @@ func (this *App) send(c *cli.Context) {
 	fmt.Printf("Press any key to start recording your message...\n")
 	gopass.GetCh()
 
-	for i := 15; i > 0; i-- {
-		fmt.Printf("\rRecording...%d seconds left", i)
-		time.Sleep(time.Duration(1) * time.Second)
+	go func() {
+		for i := 15; i > 0; i-- {
+			fmt.Printf("\rRecording...%d seconds left", i)
+			time.Sleep(time.Duration(1) * time.Second)
+		}
+	}()
+	f, err := this.record(time.Duration(15) * time.Second)
+	if err != nil {
+		fmt.Printf("\nError recording!%s", err.Error())
+		return
 	}
+	fmt.Println(f)
+
 	fmt.Printf("\rRecorded\n")
 
 	fmt.Printf("Sending to %s...\n", to)
