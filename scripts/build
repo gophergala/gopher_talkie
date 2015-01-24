@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 TARGET=$1
-OUTPUT=${2:-TARGET}
+OUTPUT=${2:-$TARGET}
 
 if [ "x${TARGET}" == "x" ]; then
 	echo "Usage: `basename $0` target [output]"
@@ -11,6 +11,11 @@ fi
 if [ ! -e ".godeps" ]; then
 	echo "Missing .godeps! Run bootstrap.sh first!"
 	exit 1
+fi
+
+if [ ! -e ".godeps/src/github.com/gophergala/gopher_talkie/app" ]; then
+	mkdir -p ".godeps/src/github.com/gophergala/gopher_talkie"
+	cd ".godeps/src/github.com/gophergala/gopher_talkie" && ln -s ../../../../../src/cli/app app && cd -
 fi
 
 PACKAGE=./src/$TARGET

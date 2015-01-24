@@ -2,16 +2,16 @@ GO := `which go`
 GOFMT := `which gofmt`
 GOVET := ./scripts/vet
 
-all: app server
+all: cli server
 
-app: 
-	@/bin/bash ./scripts/build app
+cli: 
+	@/bin/bash ./scripts/build cli talkie
 
 server:
 	@/bin/bash ./scripts/build server
 
-test: app server
-	@/bin/bash ./scripts/test app
+test: cli server
+	@/bin/bash ./scripts/test cli/app
 	@/bin/bash ./scripts/test server
 
 check:
@@ -23,4 +23,7 @@ vet:
 format:
 	@git ls-files | grep '.go$$' | xargs $(GOFMT) -w -s
 
-.PHONY = all app server test check vet format
+deps:
+	@/bin/bash ./scripts/deps
+
+.PHONY = all cli server test check vet format deps

@@ -1,0 +1,4 @@
+#!/bin/bash
+source gvp in
+gpm install
+source gvp out
