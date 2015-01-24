@@ -1,0 +1,22 @@
+#!/bin/bash -e
+
+TARGET=$1
+OUTPUT=${2:-TARGET}
+
+if [ "x${TARGET}" == "x" ]; then
+	echo "Usage: `basename $0` target [output]"
+	exit 1
+fi
+
+if [ ! -e ".godeps" ]; then
+	echo "Missing .godeps! Run bootstrap.sh first!"
+	exit 1
+fi
+
+PACKAGE=./src/$TARGET
+OUTPUT=./bin/$OUTPUT
+
+source gvp in
+go build -o $OUTPUT $PACKAGE
+source gvp out
+

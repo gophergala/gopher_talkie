@@ -1,0 +1,11 @@
+#!/bin/bash -e
+
+if [ ! -e ".godeps" ]; then
+	echo "Missing .godeps! Run bootstrap.sh first!"
+	exit 1
+fi
+
+source gvp in
+go vet $@
+source gvp out
+
