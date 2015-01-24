@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"github.com/codegangsta/cli"
+	"github.com/gophergala/gopher_talkie/common"
 	"github.com/nklizhe/gopass"
 	"os"
 	"time"
@@ -34,6 +35,16 @@ func (this *App) send(c *cli.Context) {
 			time.Sleep(time.Duration(1) * time.Second)
 		}
 	}()
+
+	users, err := this.store.FindUserByName(to)
+	if err != nil || len(users) == 0 {
+		fmt.Printf("\nUser '%s' not found!", to)
+		return
+	}
+
+	// TODO: ask user to select if there are multiple users
+
+	msg := common.NewMessage(this.user, users[0])
 	f, err := this.record(time.Duration(15) * time.Second)
 	if err != nil {
 		fmt.Printf("\nError recording!%s", err.Error())
@@ -42,7 +53,9 @@ func (this *App) send(c *cli.Context) {
 	fmt.Println(f)
 
 	fmt.Printf("\rRecorded\n")
+	msg.Content = []byte(f)    // TODO: encrypt message
+	this.store.AddMessage(msg) // Save message
 
-	fmt.Printf("Sending to %s...\n", to)
+	fmt.Printf("Sending to %s...\n", msg.To.Name)
 	fmt.Printf("Done\n")
 }

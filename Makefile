@@ -10,9 +10,8 @@ cli:
 server:
 	@/bin/bash ./scripts/build server
 
-test: cli server
-	@/bin/bash ./scripts/test cli/app
-	@/bin/bash ./scripts/test server
+test:
+	@/bin/bash ./scripts/test common
 
 check:
 	@./.hooks/pre-commit
@@ -26,4 +25,7 @@ format:
 deps:
 	@/bin/bash ./scripts/deps
 
-.PHONY = all cli server test check vet format deps
+clean:
+	@rm -rf .godeps/pkg/*
+
+.PHONY = all cli server test check vet format deps clean

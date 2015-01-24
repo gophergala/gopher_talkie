@@ -14,8 +14,9 @@ const (
 )
 
 type App struct {
-	app  *cli.App
-	user *common.User
+	app   *cli.App
+	user  *common.User
+	store common.Store
 }
 
 func NewApp() *App {
@@ -38,6 +39,9 @@ func NewApp() *App {
 	}
 
 	this.app = app
+	this.store = common.NewStoreSqlite(common.SqliteStoreOptions{
+		DBPath: "talkie.db",
+	})
 
 	return this
 }

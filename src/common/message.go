@@ -5,11 +5,18 @@ import (
 )
 
 type Message struct {
-	MessageID string        `json:"id"`
+	MessageID int64         `json:"id"`
 	From      *User         `json:"from"`
 	To        *User         `json:"to"`
 	Content   []byte        `json:"content,omitempty"`
-	Timestamp time.Time     `json:"time"`
+	CreatedAt time.Time     `json:"created_at"`
 	Duration  time.Duration `json:"duration"`
 	Played    bool          `json:"played"`
+}
+
+func NewMessage(from, to *User) *Message {
+	return &Message{
+		From: from,
+		To:   to,
+	}
 }
