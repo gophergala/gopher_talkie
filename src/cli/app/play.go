@@ -3,7 +3,7 @@ package app
 import (
 	"fmt"
 	"github.com/codegangsta/cli"
-	"github.com/gophergala/gopher_talkie/common"
+	"github.com/gophergala/gopher_talkie/src/common"
 	_ "os"
 )
 

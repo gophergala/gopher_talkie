@@ -2,7 +2,7 @@ package main
 
 import (
 	_ "fmt"
-	"github.com/gophergala/gopher_talkie/app"
+	"github.com/gophergala/gopher_talkie/src/cli/app"
 )
 
 func main() {
