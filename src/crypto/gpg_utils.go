@@ -189,3 +189,18 @@ func GPGDecrypt(uid string, src io.Reader) ([]byte, error) {
 	defer rd.Close()
 	return ioutil.ReadAll(rd)
 }
+
+func GPGSearch(key string) (*Key, error) {
+	var buf bytes.Buffer
+
+	// search key from gpg keyserver
+	gpg := exec.Command(GPGPath, "--display-charset", "utf-8", "--search", key)
+	gpg.Stdout = &buf
+	err := gpg.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: read output
+	return nil, nil
+}

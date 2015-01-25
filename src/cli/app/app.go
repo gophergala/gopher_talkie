@@ -1,22 +1,39 @@
 package app
 
 import (
-	_ "fmt"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/codegangsta/cli"
 	"github.com/gophergala/gopher_talkie/common"
-
+	"github.com/gophergala/gopher_talkie/crypto"
+	"io/ioutil"
 	"os"
+	"path"
+	"time"
 )
 
 const (
-	Version = "0.1.0"
-	Author  = "nklizhe@gmail.com"
+	Version            = "0.1.0"
+	Author             = "nklizhe@gmail.com"
+	DefaultMaxDuration = time.Duration(15) * time.Second
 )
 
+var (
+	ErrNoKeyFound = errors.New("no key found")
+	ErrNoUser     = errors.New("no user")
+)
+
+type AppConfig struct {
+	CurrentUser string `json:"current_user,omitempty"`
+}
+
 type App struct {
-	app   *cli.App
-	user  *common.User
-	store common.Store
+	app         *cli.App
+	config      *AppConfig
+	user        *common.User
+	store       common.Store
+	maxDuration time.Duration
 }
 
 func NewApp() *App {
@@ -40,12 +57,144 @@ func NewApp() *App {
 
 	this.app = app
 	this.store = common.NewStoreSqlite(common.SqliteStoreOptions{
-		DBPath: "talkie.db",
+		DBPath: path.Join(os.Getenv("HOME"), ".talkie", "talkie.db"),
 	})
+	this.maxDuration = DefaultMaxDuration
+	this.config, _ = this.loadConfig()
 
 	return this
 }
 
 func (this *App) Run() {
+	this.loadConfig()
+
+	err := this.setup()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
+		return
+	}
+
 	this.app.Run(os.Args)
+}
+
+func (this *App) loadConfig() (*AppConfig, error) {
+	confdir := path.Join(os.Getenv("HOME"), ".talkie")
+	if err := os.MkdirAll(confdir, 0750); err != nil {
+		return nil, err
+	}
+
+	conffile := path.Join(confdir, "config")
+	rd, err := os.Open(conffile)
+	if err != nil {
+		return nil, err
+	}
+	defer rd.Close()
+
+	d, err := ioutil.ReadAll(rd)
+	if err != nil {
+		return nil, err
+	}
+	var cfg AppConfig
+	err = json.Unmarshal(d, &cfg)
+	if err != nil {
+		return nil, err
+	}
+	return &cfg, nil
+}
+
+func (this *App) saveConfig(cfg *AppConfig) error {
+	confdir := path.Join(os.Getenv("HOME"), ".talkie")
+	if err := os.MkdirAll(confdir, 0750); err != nil {
+		return err
+	}
+	conffile := path.Join(confdir, "config")
+	wd, err := os.Create(conffile)
+	if err != nil {
+		return err
+	}
+	defer wd.Close()
+
+	b, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	_, err = wd.Write(b)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (this *App) selectCurrentUser() *common.User {
+	// List all users of gpg
+	keys, err := crypto.GPGListSecretKeys()
+	if err != nil {
+		return nil
+	}
+	if len(keys) == 0 {
+		return nil
+	}
+
+	var idx int
+	if len(keys) > 0 {
+		fmt.Fprintf(os.Stderr, "There more than one keypairs, please select which one do you want to use:\n")
+		for i := range keys {
+			k := keys[i]
+			fmt.Fprintf(os.Stderr, "  (%d) %s %s <%s>\n", i+1, k.PublicKey, k.Name, k.Email)
+		}
+		fmt.Fprintf(os.Stderr, "Enter number (%d - %d) > ", 1, len(keys))
+
+		var choice int
+		for {
+			fmt.Scanf("%v", &choice)
+			if choice > 0 && choice <= len(keys) {
+				break
+			}
+		}
+		idx = choice - 1
+	}
+
+	k := keys[idx]
+	user := &common.User{
+		Name:  k.Name,
+		Email: k.Email,
+		Key:   k.PublicKey,
+	}
+	err = this.store.AddUser(user)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
+	}
+	return user
+}
+
+func (this *App) registerUser(user *common.User) error {
+	// TODO: register to online service
+	return nil
+}
+
+func (this *App) setup() error {
+	if this.user == nil {
+		// try load user from config
+		if this.config != nil && this.config.CurrentUser != "" {
+			this.user, _ = this.store.FindUserByKey(this.config.CurrentUser)
+		}
+
+		// still not found
+		if this.user == nil {
+			this.user = this.selectCurrentUser()
+			if this.user != nil {
+				// save config
+				if this.config == nil {
+					this.config = &AppConfig{
+						CurrentUser: this.user.Key,
+					}
+					this.saveConfig(this.config)
+				}
+			}
+		}
+	}
+	if this.user == nil {
+		return ErrNoUser
+	}
+	return nil
 }

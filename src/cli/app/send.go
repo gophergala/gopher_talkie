@@ -1,11 +1,15 @@
 package app
 
 import (
+	"code.google.com/p/go-uuid/uuid"
 	"fmt"
 	"github.com/codegangsta/cli"
+	"github.com/gophergala/gopher_talkie/audio"
 	"github.com/gophergala/gopher_talkie/common"
+	"github.com/gophergala/gopher_talkie/crypto"
 	"github.com/nklizhe/gopass"
 	"os"
+	"path"
 	"time"
 )
 
@@ -20,42 +24,75 @@ func NewSendCommand(this *App) cli.Command {
 }
 
 func (this *App) send(c *cli.Context) {
+	if this.user == nil {
+		panic(ErrNoUser)
+		return
+	}
+
 	if len(c.Args()) == 0 {
 		fmt.Printf("Usage: %s send <to>\n", os.Args[0])
 		return
 	}
 	to := c.Args()[0]
 
+	// TODO: find key of the recipient
+
 	fmt.Printf("Press any key to start recording your message...\n")
 	gopass.GetCh()
 
-	go func() {
-		for i := 15; i > 0; i-- {
-			fmt.Printf("\rRecording...%d seconds left", i)
-			time.Sleep(time.Duration(1) * time.Second)
-		}
-	}()
+	// create a temp file
+	fileName := path.Join(os.TempDir(), fmt.Sprintf("%s.aiff", uuid.NewUUID().String()))
 
-	users, err := this.store.FindUserByName(to)
-	if err != nil || len(users) == 0 {
-		fmt.Printf("\nUser '%s' not found!", to)
+	// create a signal
+	sig := make(chan int)
+
+	// create a callback func
+	cb := func(samples int) {
+		maxSamples := int(float64(this.maxDuration/time.Second) * audio.DefaultSampleRate)
+		remain := time.Duration(float64(maxSamples-samples)/audio.DefaultSampleRate) * time.Second
+		fmt.Printf("\rRecording...%.1f seconds left", remain.Seconds())
+	}
+
+	// record
+	fmt.Printf("\rRecording...%.1f seconds left", this.maxDuration.Seconds())
+	options := audio.RecordOptions{
+		FilePath:    fileName,
+		MaxDuration: this.maxDuration,
+		StopSignal:  sig,
+		Callback:    cb,
+	}
+
+	if err := audio.RecordAIFF(options); err != nil {
+		fmt.Printf("Error recording message! %s", err.Error())
 		return
 	}
 
-	// TODO: ask user to select if there are multiple users
-
-	msg := common.NewMessage(this.user, users[0])
-	f, err := this.record(time.Duration(15) * time.Second)
+	// encrypt message
+	rd, err := os.Open(fileName)
 	if err != nil {
-		fmt.Printf("\nError recording!%s", err.Error())
+		fmt.Printf("Error: %s", err.Error())
 		return
 	}
-	fmt.Println(f)
+	defer rd.Close()
 
-	fmt.Printf("\rRecorded\n")
-	msg.Content = []byte(f)    // TODO: encrypt message
-	this.store.AddMessage(msg) // Save message
+	content, err := crypto.GPGEncrypt(this.user.Key, to, rd)
+	if err != nil {
+		fmt.Printf("Error encrypt message! %s", err.Error())
+		return
+	}
 
-	fmt.Printf("Sending to %s...\n", msg.To.Name)
+	// ask user to select if there are multiple users
+	fmt.Printf("Encrypting message...\n")
+	msg := &common.Message{
+		From: this.user,
+		To: &common.User{
+			Key: to,
+		},
+		CreatedAt: time.Now(),
+		Content:   content,
+	}
+	this.store.AddMessage(msg) // Store message before send
+
+	fmt.Printf("Sending...\n", msg.To.Name)
 	fmt.Printf("Done\n")
 }

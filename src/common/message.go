@@ -12,6 +12,8 @@ type Message struct {
 	CreatedAt time.Time     `json:"created_at"`
 	Duration  time.Duration `json:"duration"`
 	Played    bool          `json:"played"`
+	Path      string        `json:"path"`
+	RemoteURL string        `json:"remote_url"`
 }
 
 func NewMessage(from, to *User) *Message {

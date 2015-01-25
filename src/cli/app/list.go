@@ -1,9 +1,17 @@
 package app
 
 import (
+	"bytes"
+	"code.google.com/p/go-uuid/uuid"
 	"fmt"
 	"github.com/codegangsta/cli"
-	_ "os"
+	"github.com/gophergala/gopher_talkie/audio"
+	_ "github.com/gophergala/gopher_talkie/common"
+	"github.com/gophergala/gopher_talkie/crypto"
+	"io"
+	"os"
+	"path"
+	"strconv"
 )
 
 func NewListCommand(app *App) cli.Command {
@@ -17,5 +25,68 @@ func NewListCommand(app *App) cli.Command {
 }
 
 func (this *App) list(c *cli.Context) {
-	fmt.Printf("List all message...\n")
+	messages, err := this.store.GetUserMessages(this.user.UserID)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+	}
+
+	if len(messages) > 0 {
+		fmt.Printf("You have new messages:\n\n")
+		for i := range messages {
+			m := messages[i]
+			fmt.Printf("  (%d) %s <%s> - %s\n", i+1, m.From.Name, m.From.Email, m.CreatedAt.Format("Jan 02"))
+		}
+
+		for {
+			fmt.Printf("Enter number (%d - %d) to listen, or Q)uit > ", 1, len(messages))
+			var choice string
+			fmt.Scanf("%v", &choice)
+			if choice == "Q" {
+				break
+			}
+
+			idx, _ := strconv.ParseInt(choice, 10, 4)
+			if int(idx) > 0 && int(idx) <= len(messages) {
+				// play message at idx-1
+				m := messages[int(idx)-1]
+
+				// decrypt content
+				content, err := crypto.GPGDecrypt(this.user.Key, bytes.NewReader(m.Content))
+				if err != nil {
+					fmt.Printf("Error decrypt message! %s", err.Error())
+					continue
+				}
+
+				// save it to a temp file
+				tempfile := path.Join(os.TempDir(), fmt.Sprintf("%s.aiff", uuid.NewUUID().String()))
+				defer func() {
+					os.RemoveAll(tempfile)
+				}()
+				f, err := os.Create(tempfile)
+				if err != nil {
+					fmt.Printf("Error: %s\n", err.Error())
+					continue
+				}
+				defer f.Close()
+
+				_, err = io.Copy(f, bytes.NewBuffer(content))
+				if err != nil {
+					fmt.Printf("Error: %s\n", err.Error())
+					continue
+				}
+
+				// play
+				fmt.Printf("Playing...")
+				err = audio.PlayAIFF(tempfile, nil)
+				if err != nil {
+					fmt.Printf("Error: %s\n", err.Error())
+					continue
+				}
+				fmt.Println()
+			}
+		}
+
+	} else {
+		fmt.Println("No messages.\n")
+	}
 }

@@ -27,7 +27,7 @@ var (
 		"name" TEXT NOT NULL,
 		"email" TEXT NOT NULL,
 		"created_at" TEXT
-		); CREATE UNIQUE INDEX users_idx1 ON users(email);`
+		); CREATE UNIQUE INDEX IF NOT EXISTS users_idx1 ON users(email);`
 	createMessagesTableStmt = `CREATE TABLE IF NOT EXISTS messages (
 		id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
 		"from" TEXT NOT NULL,
