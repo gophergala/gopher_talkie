@@ -45,7 +45,7 @@ var (
 	updateUserStmt         = `INSERT OR REPLACE INTO users (name, email, key) VALUES (?, ?, ?)`
 	selectUserStmt         = `SELECT id, name, email, key FROM users WHERE id = ?`
 	selectUserByKeyStmt    = `SELECT id, name, email, key FROM users WHERE key = ?`
-	selectUserMessagesStmt = `SELECT id, "from", "to", "duration", "content", "created_at", "played" FROM messages WHERE "to" = ?`
+	selectUserMessagesStmt = `SELECT id, "from", "to", "duration", "created_at", "played" FROM messages WHERE "to" = ?`
 	selectUserByNameStmt   = `SELECT id, name, email, key FROM users WHERE name = ?`
 	deleteUserStmt         = `DELETE users WHERE id = ?`
 	deleteUserByKeyStmt    = `DELETE users WHERE key = ?`
