@@ -1,7 +1,11 @@
 #!/bin/bash -e
-apt-get -y update
-apt-get -y install make curl bison
-apt-get -y install git mercurial 
+sudo apt-get -y update
+sudo apt-get -y install make curl bison
+sudo apt-get -y install git mercurial 
+sudo apt-get -y install pkg-config
+sudo apt-get -y install gnupg
+sudo apt-get -y install portaudio19-dev
+sudo apt-get -y install sqlite3
 
 # install go1.4 using gvm
 bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)
@@ -17,14 +21,14 @@ EOF
 git clone https://github.com/pote/gpm.git && cd gpm
 git checkout v1.3.1
 ./configure
-make install
+sudo make install
 cd ..
 
 # install gvp
 git clone https://github.com/pote/gvp.git && cd gvp
 git checkout v0.1.0
 ./configure
-make install
+sudo make install
 cd ..
 
 

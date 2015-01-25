@@ -1,5 +1,5 @@
 # Gopher Talkie
-Secure voice messaging for geeks.
+`talkie` is a command-line tool for sending secure voice messages.
 
 ## Features
 * Easy-to-use CLI for recording voice messages
@@ -7,6 +7,12 @@ Secure voice messaging for geeks.
 
 ## Use Case
 <TODO>
+
+## Usage
+`talkie` assumes [GnuPG](https://www.gnupg.org/) is already installed on your Linux/Mac machine.
+
+
+
 
 ## Build
 

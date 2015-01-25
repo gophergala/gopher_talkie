@@ -55,6 +55,8 @@ func NewApp() *App {
 		NewDeleteCommand(this),
 	}
 
+	os.MkdirAll(path.Join(os.Getenv("HOME"), ".talkie"), 0750)
+
 	this.app = app
 	this.store = common.NewStoreSqlite(common.SqliteStoreOptions{
 		DBPath: path.Join(os.Getenv("HOME"), ".talkie", "talkie.db"),
