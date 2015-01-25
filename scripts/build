@@ -28,6 +28,11 @@ if [ ! -e ".godeps/src/github.com/gophergala/gopher_talkie/audio" ]; then
 	cd ".godeps/src/github.com/gophergala/gopher_talkie" && ln -s ../../../../../src/audio audio && cd -
 fi
 
+if [ ! -e ".godeps/src/github.com/gophergala/gopher_talkie/crypto" ]; then
+	mkdir -p ".godeps/src/github.com/gophergala/gopher_talkie"
+	cd ".godeps/src/github.com/gophergala/gopher_talkie" && ln -s ../../../../../src/crypto crypto && cd -
+fi
+
 PACKAGE=./src/$TARGET
 OUTPUT=./bin/$OUTPUT
 
