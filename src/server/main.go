@@ -151,14 +151,20 @@ func messages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// encrypt all response content so that only the owner of the key can see the messages!!
-	encryptedData, err := crypto.GPGEncrypt(serverKey, key, bytes.NewReader(d))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if r.FormValue("encrypt") == "1" {
+		// encrypt all response content so that only the owner of the key can see the messages!!
+		encryptedData, err := crypto.GPGEncrypt(serverKey, key, bytes.NewReader(d))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/octet-stream")
+		_, err = w.Write(encryptedData)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		_, err = w.Write(d)
 	}
-	w.Header().Set("Content-Type", "application/octet-stream")
-	_, err = w.Write(encryptedData)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

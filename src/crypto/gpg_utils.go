@@ -137,7 +137,7 @@ func GPGEncrypt(uid, recipient string, src io.Reader) ([]byte, error) {
 	wd.Close()
 
 	// encrypt using gpg
-	gpg := exec.Command(GPGPath, "--yes", "-u", uid, "-se", "-r", recipient, "-o", dstfile, srcfile)
+	gpg := exec.Command(GPGPath, "--trust-model", "always", "-u", uid, "-se", "-r", recipient, "-o", dstfile, srcfile)
 	gpg.Stdin = os.Stdin
 	if err = gpg.Run(); err != nil {
 		return nil, err

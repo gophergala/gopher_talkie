@@ -142,19 +142,20 @@ func (c *Client) GetMessages(user *common.User) ([]*common.Message, error) {
 		return nil, err
 	}
 
-	if res.Header.Get("Content-Type") != "application/octet-stream" {
-		b, _ := ioutil.ReadAll(res.Body)
-		return nil, errors.New(string(b))
-	}
-
-	decryptedData, err := crypto.GPGDecrypt(user.Key, res.Body)
-	if err != nil {
-		return nil, err
-	}
-
 	var s MessagesResponse
-	if err := json.Unmarshal(decryptedData, &s); err != nil {
-		return nil, err
+	if res.Header.Get("Content-Type") == "application/octet-stream" {
+		decryptedData, err := crypto.GPGDecrypt(user.Key, res.Body)
+		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal(decryptedData, &s); err != nil {
+			return nil, err
+		}
+	} else if res.Header.Get("Content-Type") == "application/json" {
+		d, _ := ioutil.ReadAll(res.Body)
+		if err := json.Unmarshal(d, &s); err != nil {
+			return nil, err
+		}
 	}
 
 	if !s.Success {
