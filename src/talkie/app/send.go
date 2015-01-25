@@ -39,7 +39,7 @@ func (this *App) send(c *cli.Context) {
 		recipient = this.user
 	} else {
 		to := c.Args()[0]
-		recipient, _ := this.store.FindUserByKey(to)
+		recipient, _ = this.store.FindUserByKey(to)
 		if recipient == nil {
 			keys, err := crypto.GPGListPublicKeys(to)
 			if err == nil && len(keys) == 1 {
@@ -61,7 +61,7 @@ func (this *App) send(c *cli.Context) {
 		return
 	}
 
-	fmt.Printf("Press any key to start recording your message...\n")
+	fmt.Printf("Press any key to start recording...\n")
 	gopass.GetCh()
 
 	// create a temp file

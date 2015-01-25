@@ -59,7 +59,7 @@ func parseBuffer(buf *bytes.Buffer) ([]Key, error) {
 		matches1 := re1.FindAllStringSubmatch(line, -1)
 		if len(matches1) > 0 && len(matches1[0]) > 4 {
 			key.PublicKey = strings.TrimSpace(matches1[0][3])
-			fmt.Printf("d: %s\n", matches1[0][4])
+			// fmt.Printf("d: %s\n", matches1[0][4])
 			key.CreatedAt, _ = time.Parse("2006-01-02", strings.TrimSpace(matches1[0][4]))
 
 			// read next line

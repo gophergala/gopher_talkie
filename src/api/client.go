@@ -54,7 +54,7 @@ func (c *Client) Register(user *common.User) error {
 		return err
 	}
 
-	fmt.Printf("register: %v\n", user)
+	// fmt.Printf("register: %v\n", user)
 	res, err := http.Post(url, "application/json", bytes.NewReader(body))
 	if err != nil {
 		return err
