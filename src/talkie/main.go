@@ -1,8 +1,7 @@
 package main
 
 import (
-	_ "fmt"
-	"github.com/gophergala/gopher_talkie/src/cli/app"
+	"github.com/gophergala/gopher_talkie/src/talkie/app"
 )
 
 func main() {

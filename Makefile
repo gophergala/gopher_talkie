@@ -2,17 +2,16 @@ GO := `which go`
 GOFMT := `which gofmt`
 GOVET := ./scripts/vet
 
-all: cli server
+all: cli
 
 cli: 
-	@/bin/bash ./scripts/build cli talkie
-
-server:
-	@/bin/bash ./scripts/build server
+	@/bin/bash ./scripts/build talkie
 
 test:
 	@/bin/bash ./scripts/test common
-
+	@/bin/bash ./scripts/test audio
+	@/bin/bash ./scripts/test crypto
+	
 check:
 	@./.hooks/pre-commit
 
@@ -28,4 +27,4 @@ deps:
 clean:
 	@rm -rf .godeps/pkg/*
 
-.PHONY = all cli server test check vet format deps clean
+.PHONY = all cli test check vet format deps clean
