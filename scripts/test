@@ -1,10 +1,21 @@
 #!/bin/bash -e
 
+OPTIND=1
+while getopts "h?vf:" opt; do
+    case "$opt" in
+    v)  VERBOSE=-v
+        ;;
+    esac
+done
+
+shift $((OPTIND-1))
+
 TARGET=$1
 if [ "x${TARGET}" == "x" ]; then
 	echo "Usage: `basename $0` target"
 	exit 1
 fi
+shift
 
 PACKAGE=./src/$TARGET
 OUTPUT=./bin/$TARGET
@@ -15,6 +26,6 @@ if [ ! -e ".godeps" ]; then
 fi
 
 source gvp in
-go test -o $OUTPUT $PACKAGE
+go test $VERBOSE -o $OUTPUT $PACKAGE $@
 source gvp out
 
