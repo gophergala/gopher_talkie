@@ -5,6 +5,7 @@
 * Easy-to-use CLI for recording voice messages
 * Sending voice message securely to anyone using PGP encryption
 
+
 ## Use Case
 <TODO>
 

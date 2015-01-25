@@ -26,7 +26,6 @@ func NewSendCommand(this *App) cli.Command {
 func (this *App) send(c *cli.Context) {
 	if this.user == nil {
 		panic(ErrNoUser)
-		return
 	}
 
 	if len(c.Args()) == 0 {
@@ -93,6 +92,6 @@ func (this *App) send(c *cli.Context) {
 	}
 	this.store.AddMessage(msg) // Store message before send
 
-	fmt.Printf("Sending...\n", msg.To.Name)
-	fmt.Printf("Done\n")
+	fmt.Printf("Sending...\n")
+	fmt.Println("Done")
 }

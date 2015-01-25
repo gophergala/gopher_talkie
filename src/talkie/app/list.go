@@ -87,6 +87,6 @@ func (this *App) list(c *cli.Context) {
 		}
 
 	} else {
-		fmt.Println("No messages.\n")
+		fmt.Println("No messages.")
 	}
 }

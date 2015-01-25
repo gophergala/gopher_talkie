@@ -22,7 +22,7 @@ func createStore(dbPath string) Store {
 	if err != nil {
 		panic(err)
 	}
-	return NewStoreSqlite(SqliteStoreOptions{
+	return NewStoreSqlite(&SqliteStoreOptions{
 		DBPath: dbPath,
 	})
 }

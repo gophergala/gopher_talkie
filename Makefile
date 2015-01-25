@@ -2,11 +2,14 @@ GO := `which go`
 GOFMT := `which gofmt`
 GOVET := ./scripts/vet
 
-all: cli
+all: cli server
 
 cli: 
 	@/bin/bash ./scripts/build talkie
 
+server:
+	@/bin/bash ./scripts/build server
+	
 test:
 	@/bin/bash ./scripts/test common
 	@/bin/bash ./scripts/test audio
@@ -16,7 +19,7 @@ check:
 	@./.hooks/pre-commit
 
 vet:
-	@git ls-files | grep '.go$$' | while read i; do $(GO) vet $$i 2>&1; done | grep -v exit\ status | grep -v pb.go | grep -v Error\ call
+	@/bin/bash ./scripts/vet
 
 format:
 	@git ls-files | grep '.go$$' | xargs $(GOFMT) -w -s

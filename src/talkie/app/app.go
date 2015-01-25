@@ -15,7 +15,8 @@ import (
 
 const (
 	Version            = "0.1.0"
-	Author             = "nklizhe@gmail.com"
+	Author             = "Tom Li"
+	Email              = "nklizhe@gmail.com"
 	DefaultMaxDuration = time.Duration(15) * time.Second
 )
 
@@ -48,6 +49,7 @@ func NewApp() *App {
 	}
 	app.Version = Version
 	app.Author = Author
+	app.Email = Email
 	app.Commands = []cli.Command{
 		NewListCommand(this),
 		NewSendCommand(this),
@@ -58,7 +60,7 @@ func NewApp() *App {
 	os.MkdirAll(path.Join(os.Getenv("HOME"), ".talkie"), 0750)
 
 	this.app = app
-	this.store = common.NewStoreSqlite(common.SqliteStoreOptions{
+	this.store = common.NewStoreSqlite(&common.SqliteStoreOptions{
 		DBPath: path.Join(os.Getenv("HOME"), ".talkie", "talkie.db"),
 	})
 	this.maxDuration = DefaultMaxDuration
