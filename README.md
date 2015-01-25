@@ -8,28 +8,21 @@
 ## Use Case
 <TODO>
 
+## Install
+
+* Install PortAudio
+  * Mac: `brew install portaudio`
+  * Ubuntu: `apt-get install portaudio19-dev`
+
+* Install GunPG and configure it
+  * Mac: `brew install gpg`
+  * Ubuntu: `apt-get install gnu-pg`
+
+* Run `go get github.com/gophergala/gopher_talkie/src/talkie`
+
 ## Usage
 `talkie` assumes [GnuPG](https://www.gnupg.org/) is already installed on your Linux/Mac machine.
 
-
-
-
-## Build
-
-### Setting up the Go development environment.
-* Mac OS X: `./bootstrap.darwin.sh`
-* Ubuntu: `sudo ./bootstrap.linux.sh`
-
-### Install PortAudio
-* Mac: `brew install portaudio`
-* Ubuntu: `sudo apt-get install portaudio`
-
-### Build
-```
-make
-```
-
-## Usage
 ```
 NAME:
    talkie - Secure voicing messaging for geeks
@@ -54,3 +47,18 @@ GLOBAL OPTIONS:
    --help, -h		show help
    --version, -v	print the version
  ```
+
+## Build
+We are using [GPM](https://github.com/pote/gpm) and [GVP](https://github.com/pote/gvp) to manage Go packages.
+
+* Setting up the Go development environment.
+  * Mac OS X: `./bootstrap.darwin.sh`
+  * Ubuntu: `sudo ./bootstrap.linux.sh`
+
+* Run
+
+```
+cd gopher_talkie/
+make deps
+make
+```
