@@ -5,7 +5,7 @@ type Store interface {
 	FindUser(userID int64) (*User, error)
 	FindUserByName(name string) ([]*User, error)
 	FindUserByKey(key string) (*User, error)
-	GetUserMessages(userID int64) ([]*Message, error)
+	GetUserMessages(key string) ([]*Message, error)
 
 	AddMessage(msg *Message) error
 	UpdateMessagePlayed(msgID int64, played bool) error

@@ -9,7 +9,19 @@ import (
 )
 
 func TestGPGListSecretKeys(t *testing.T) {
-	list, err := GPGListSecretKeys()
+	list, err := GPGListSecretKeys("")
+	assert.Nil(t, err)
+	assert.True(t, len(list) > 0)
+
+	for i := range list {
+		fmt.Printf("%v\n", list[i])
+		assert.NotEmpty(t, list[i].Name)
+		assert.NotEmpty(t, list[i].Email)
+	}
+}
+
+func TestGPGListPublicKeys(t *testing.T) {
+	list, err := GPGListPublicKeys("")
 	assert.Nil(t, err)
 	assert.True(t, len(list) > 0)
 

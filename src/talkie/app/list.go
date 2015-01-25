@@ -26,11 +26,11 @@ func NewListCommand(app *App) cli.Command {
 
 func (this *App) list(c *cli.Context) {
 	if err := this.setup(c); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 		return
 	}
+
 	messages, err := this.client.GetMessages(this.user)
-	// messages, err := this.store.GetUserMessages(this.user.UserID)
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 	}

@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	_ "errors"
 	"fmt"
 	"github.com/codegangsta/cli"
 	"github.com/gophergala/gopher_talkie/src/common"
@@ -75,7 +75,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user common.User
-	if r.Header.Get("Content-Type") == "application-json" {
+	if r.Header.Get("Content-Type") == "application/json" {
 		err := parseJSON(r.Body, &user)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -91,9 +91,18 @@ func register(w http.ResponseWriter, r *http.Request) {
 			Key:   key,
 		}
 	}
-	err := store.AddUser(&user)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	keys, _ := crypto.GPGListPublicKeys(user.Key)
+	if keys == nil || len(keys) == 0 {
+		err := crypto.GPGRecvKey(user.Key)
+		if err != nil {
+			responseError(w, err)
+			return
+		}
+	}
+
+	if err := store.AddUser(&user); err != nil {
+		responseError(w, err)
 		return
 	}
 	responseSuccess(w, &user)
@@ -126,24 +135,13 @@ func send(w http.ResponseWriter, r *http.Request) {
 
 func messages(w http.ResponseWriter, r *http.Request) {
 	key := r.FormValue("key")
-	// since := r.FormValue("since")
-	user, err := store.FindUserByKey(key)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if user == nil {
-		responseError(w, errors.New("user not found"))
-		return
-	}
-
-	messages, err := store.GetUserMessages(user.UserID)
+	messages, err := store.GetUserMessages(key)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	res := Response{
+	res := &Response{
 		Success: true,
 		Data:    &messages,
 	}
@@ -155,6 +153,10 @@ func messages(w http.ResponseWriter, r *http.Request) {
 
 	// encrypt all response content so that only the owner of the key can see the messages!!
 	encryptedData, err := crypto.GPGEncrypt(serverKey, key, bytes.NewReader(d))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/octet-stream")
 	_, err = w.Write(encryptedData)
 	if err != nil {

@@ -49,6 +49,7 @@ GLOBAL OPTIONS:
    
  ```
 
+* Connect to your
 ## Build
 We are using [GPM](https://github.com/pote/gpm) and [GVP](https://github.com/pote/gvp) to manage Go packages.
 
@@ -64,5 +65,9 @@ make deps
 make
 ```
 
-## Start server
+## Start a 'talkie' server
+* Build the server: `make server`
+* Generate a new PGP key for the server: `gpg --gen-key` (Note: use an empty passphrase)
+* Start the server: `talkie-server --server-key <PGP Key>`
+
 

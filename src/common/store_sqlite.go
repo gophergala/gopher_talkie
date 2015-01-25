@@ -165,12 +165,7 @@ func (s *StoreSqlite) FindUserByKey(key string) (*User, error) {
 	return nil, ErrNoResult
 }
 
-func (s *StoreSqlite) GetUserMessages(userID int64) ([]*Message, error) {
-	user, err := s.FindUser(userID)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *StoreSqlite) GetUserMessages(key string) ([]*Message, error) {
 	if s.db == nil {
 		return nil, ErrDBNotOpen
 	}
@@ -180,7 +175,7 @@ func (s *StoreSqlite) GetUserMessages(userID int64) ([]*Message, error) {
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.Query(user.Key)
+	rows, err := stmt.Query(key)
 	if err != nil {
 		return nil, err
 	}

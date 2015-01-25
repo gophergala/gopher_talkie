@@ -53,6 +53,8 @@ func (c *Client) Register(user *common.User) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("register: %v\n", user)
 	res, err := http.Post(url, "application/json", bytes.NewReader(body))
 	if err != nil {
 		return err
@@ -139,8 +141,10 @@ func (c *Client) GetMessages(user *common.User) ([]*common.Message, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if res.Header.Get("Content-Type") != "application/octet-stream" {
-		return nil, ErrUnexpectedContentType
+		b, _ := ioutil.ReadAll(res.Body)
+		return nil, errors.New(string(b))
 	}
 
 	decryptedData, err := crypto.GPGDecrypt(user.Key, res.Body)

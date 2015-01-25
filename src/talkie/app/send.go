@@ -33,13 +33,33 @@ func (this *App) send(c *cli.Context) {
 		panic(ErrNoUser)
 	}
 
+	var recipient *common.User
 	if len(c.Args()) == 0 {
-		fmt.Printf("Usage: %s send <to>\n", os.Args[0])
+		fmt.Printf("Sending message to yourself...\n")
+		recipient = this.user
+	} else {
+		to := c.Args()[0]
+		recipient, _ := this.store.FindUserByKey(to)
+		if recipient == nil {
+			keys, err := crypto.GPGListPublicKeys(to)
+			if err == nil && len(keys) == 1 {
+				// add to store
+				recipient = &common.User{
+					Name:  keys[0].Name,
+					Email: keys[0].Email,
+					Key:   keys[0].PublicKey,
+				}
+				this.store.AddUser(recipient)
+
+				fmt.Printf("Sending message to %s <%s>...\n", recipient.Name, recipient.Email)
+			}
+		}
+	}
+
+	if recipient == nil {
+		fmt.Printf("No recipient found!\n")
 		return
 	}
-	to := c.Args()[0]
-
-	// TODO: find key of the recipient
 
 	fmt.Printf("Press any key to start recording your message...\n")
 	gopass.GetCh()
@@ -79,24 +99,26 @@ func (this *App) send(c *cli.Context) {
 	}
 	defer rd.Close()
 
-	content, err := crypto.GPGEncrypt(this.user.Key, to, rd)
+	fmt.Printf("\rRecorded.\nEncrypting message...\n")
+	content, err := crypto.GPGEncrypt(this.user.Key, recipient.Key, rd)
 	if err != nil {
-		fmt.Printf("Error encrypt message! %s", err.Error())
+		fmt.Printf("Error encrypting message! %s", err.Error())
 		return
 	}
 
-	// ask user to select if there are multiple users
-	fmt.Printf("Encrypting message...\n")
 	msg := &common.Message{
-		From: this.user,
-		To: &common.User{
-			Key: to,
-		},
+		From:      this.user,
+		To:        recipient,
 		CreatedAt: time.Now(),
 		Content:   content,
 	}
 	this.store.AddMessage(msg) // Store message before send
 
 	fmt.Printf("Sending...\n")
+
+	err = this.client.Send(msg)
+	if err != nil {
+		fmt.Printf("Error sending message! %s\n...will retry later.\n", err.Error())
+	}
 	fmt.Println("Done")
 }

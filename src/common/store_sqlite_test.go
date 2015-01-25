@@ -166,7 +166,7 @@ func TestUserMessages(t *testing.T) {
 	assert.Equal(t, 10, len(messages))
 
 	// get messages
-	m2, err := store.GetUserMessages(u2.UserID)
+	m2, err := store.GetUserMessages(u2.Key)
 	assert.Nil(t, err)
 	assert.Equal(t, 10, len(m2))
 }

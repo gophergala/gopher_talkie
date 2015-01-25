@@ -10,18 +10,26 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 )
 
 var (
-	GPGPath = "/usr/local/bin/gpg"
+	GPGPath = "gpg"
 )
 
 func init() {
-	output, err := exec.Command("which gpg").CombinedOutput()
+	var p string
+	switch runtime.GOOS {
+	case "darwin":
+		p = "/usr/local/bin/gpg"
+	case "linux":
+		p = "/usr/bin/gpg"
+	}
+	_, err := os.Stat(p)
 	if err == nil {
-		GPGPath = string(output)
+		GPGPath = p
 	}
 }
 
@@ -33,63 +41,14 @@ type Key struct {
 	CreatedAt time.Time
 }
 
-// func ListSecretKeysOld() ([]Key, error) {
-
-// 	var buf bytes.Buffer
-
-// 	gpg := exec.Command(GPGPath, "--list-secret-keys")
-
-// 	grep := exec.Command("grep", "uid")
-// 	grep.Stdin, _ = gpg.StdoutPipe()
-
-// 	sed := exec.Command("sed", "-E", "s/uid +//g")
-// 	sed.Stdin, _ = grep.StdoutPipe()
-// 	sed.Stdout = &buf
-
-// 	grep.Start()
-// 	sed.Start()
-
-// 	gpg.Run()
-// 	grep.Wait()
-// 	sed.Wait()
-
-// 	var list []Key
-// 	re := regexp.MustCompile("(.*)<(.*@.*)>")
-// 	for {
-// 		line, err := buf.ReadString('\n')
-// 		fmt.Println(line)
-// 		if err == io.EOF {
-// 			break
-// 		}
-
-// 		// parse line
-// 		matches := re.FindAllStringSubmatch(line, -1)
-// 		if len(matches) > 0 && len(matches[0]) > 2 {
-// 			key := Key{
-// 				Name:  matches[0][1],
-// 				Email: matches[0][2],
-// 			}
-// 			// fmt.Printf("key: %v\n", key)
-// 			list = append(list, key)
-// 		}
-// 	}
-
-// 	return list, nil
-// }
-
-func GPGListSecretKeys() ([]Key, error) {
-
-	var buf bytes.Buffer
-
-	gpg := exec.Command(GPGPath, "--list-secret-keys", "--display-charset", "utf-8")
-	gpg.Stdout = &buf
-	gpg.Run()
+func parseBuffer(buf *bytes.Buffer) ([]Key, error) {
 
 	var list []Key
-	re1 := regexp.MustCompile("sec\\s+(.*)/(.*) (\\d{4}-\\d{2}-\\d{2})")
+	re1 := regexp.MustCompile("(sec|pub)\\s+(.*)/(.*) (\\d{4}-\\d{2}-\\d{2})")
 	re2 := regexp.MustCompile("uid\\s+(.*)<(.*@.*)>")
 	for {
 		line, err := buf.ReadString('\n')
+		// fmt.Printf("%s\n", line)
 		if err == io.EOF {
 			break
 		}
@@ -98,9 +57,10 @@ func GPGListSecretKeys() ([]Key, error) {
 
 		// match sec
 		matches1 := re1.FindAllStringSubmatch(line, -1)
-		if len(matches1) > 0 && len(matches1[0]) > 3 {
-			key.PublicKey = strings.TrimSpace(matches1[0][2])
-			key.CreatedAt, _ = time.Parse("2006-01-02", strings.TrimSpace(matches1[0][3]))
+		if len(matches1) > 0 && len(matches1[0]) > 4 {
+			key.PublicKey = strings.TrimSpace(matches1[0][3])
+			fmt.Printf("d: %s\n", matches1[0][4])
+			key.CreatedAt, _ = time.Parse("2006-01-02", strings.TrimSpace(matches1[0][4]))
 
 			// read next line
 			line, err := buf.ReadString('\n')
@@ -118,6 +78,43 @@ func GPGListSecretKeys() ([]Key, error) {
 		}
 	}
 	return list, nil
+}
+
+func GPGListPublicKeys(search string) ([]Key, error) {
+	var buf bytes.Buffer
+	var gpg *exec.Cmd
+
+	search = strings.TrimSpace(search)
+	if len(search) > 0 {
+		gpg = exec.Command(GPGPath, "--list-public-keys", "--display-charset", "utf-8", search)
+	} else {
+		gpg = exec.Command(GPGPath, "--list-public-keys", "--display-charset", "utf-8")
+	}
+	gpg.Stdout = &buf
+	gpg.Run()
+
+	return parseBuffer(&buf)
+}
+
+func GPGRecvKey(key string) error {
+	gpg := exec.Command(GPGPath, "--batch", "--yes", "--recv-keys", "--display-charset", "utf-8", key)
+	return gpg.Run()
+}
+
+func GPGListSecretKeys(search string) ([]Key, error) {
+	var buf bytes.Buffer
+	var gpg *exec.Cmd
+
+	search = strings.TrimSpace(search)
+	if len(search) > 0 {
+		gpg = exec.Command(GPGPath, "--list-secret-keys", "--display-charset", "utf-8", search)
+	} else {
+		gpg = exec.Command(GPGPath, "--list-secret-keys", "--display-charset", "utf-8")
+	}
+	gpg.Stdout = &buf
+	gpg.Run()
+
+	return parseBuffer(&buf)
 }
 
 func GPGEncrypt(uid, recipient string, src io.Reader) ([]byte, error) {
@@ -140,7 +137,7 @@ func GPGEncrypt(uid, recipient string, src io.Reader) ([]byte, error) {
 	wd.Close()
 
 	// encrypt using gpg
-	gpg := exec.Command(GPGPath, "-u", uid, "-se", "-r", recipient, "-o", dstfile, srcfile)
+	gpg := exec.Command(GPGPath, "--yes", "-u", uid, "-se", "-r", recipient, "-o", dstfile, srcfile)
 	gpg.Stdin = os.Stdin
 	if err = gpg.Run(); err != nil {
 		return nil, err
@@ -190,17 +187,13 @@ func GPGDecrypt(uid string, src io.Reader) ([]byte, error) {
 	return ioutil.ReadAll(rd)
 }
 
-func GPGSearch(key string) (*Key, error) {
+func GPGSearch(key string) ([]Key, error) {
 	var buf bytes.Buffer
 
 	// search key from gpg keyserver
-	gpg := exec.Command(GPGPath, "--display-charset", "utf-8", "--search", key)
+	gpg := exec.Command(GPGPath, "--batch", "--display-charset", "utf-8", "--search", key)
 	gpg.Stdout = &buf
-	err := gpg.Run()
-	if err != nil {
-		return nil, err
-	}
+	gpg.Run()
 
-	// TODO: read output
-	return nil, nil
+	return parseBuffer(&buf)
 }

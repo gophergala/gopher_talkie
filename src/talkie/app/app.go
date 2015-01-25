@@ -133,7 +133,7 @@ func (this *App) saveConfig(cfg *AppConfig) error {
 
 func (this *App) selectCurrentUser() *common.User {
 	// List all users of gpg
-	keys, err := crypto.GPGListSecretKeys()
+	keys, err := crypto.GPGListSecretKeys("")
 	if err != nil {
 		return nil
 	}
@@ -175,8 +175,7 @@ func (this *App) selectCurrentUser() *common.User {
 
 func (this *App) setup(c *cli.Context) error {
 	if this.client == nil {
-		fmt.Printf("%s\n", c.String("server"))
-		this.client = api.NewClient(c.String("server"))
+		this.client = api.NewClient(c.GlobalString("server"))
 	}
 
 	if this.user == nil {
