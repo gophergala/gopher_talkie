@@ -5,6 +5,7 @@ import (
 	"code.google.com/p/portaudio-go/portaudio"
 	"encoding/binary"
 	_ "fmt"
+	"github.com/gophergala/gopher_talkie/audio"
 	"os"
 	"os/signal"
 	"path"
