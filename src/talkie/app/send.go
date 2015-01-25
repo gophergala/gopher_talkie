@@ -24,6 +24,11 @@ func NewSendCommand(this *App) cli.Command {
 }
 
 func (this *App) send(c *cli.Context) {
+	if err := this.setup(c); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
+		return
+	}
+
 	if this.user == nil {
 		panic(ErrNoUser)
 	}

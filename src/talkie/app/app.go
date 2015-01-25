@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/codegangsta/cli"
+	"github.com/gophergala/gopher_talkie/src/api"
 	"github.com/gophergala/gopher_talkie/src/common"
 	"github.com/gophergala/gopher_talkie/src/crypto"
 	"io/ioutil"
@@ -35,6 +36,7 @@ type App struct {
 	user        *common.User
 	store       common.Store
 	maxDuration time.Duration
+	client      *api.Client
 }
 
 func NewApp() *App {
@@ -47,14 +49,20 @@ func NewApp() *App {
 		// default
 		this.list(c)
 	}
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "server",
+			Value: "130.211.156.226:3333",
+		},
+	}
 	app.Version = Version
 	app.Author = Author
 	app.Email = Email
 	app.Commands = []cli.Command{
 		NewListCommand(this),
 		NewSendCommand(this),
-		NewPlayCommand(this),
-		NewDeleteCommand(this),
+		// NewPlayCommand(this),
+		// NewDeleteCommand(this),
 	}
 
 	os.MkdirAll(path.Join(os.Getenv("HOME"), ".talkie"), 0750)
@@ -71,12 +79,6 @@ func NewApp() *App {
 
 func (this *App) Run() {
 	this.loadConfig()
-
-	err := this.setup()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
-		return
-	}
 
 	this.app.Run(os.Args)
 }
@@ -171,12 +173,12 @@ func (this *App) selectCurrentUser() *common.User {
 	return user
 }
 
-func (this *App) registerUser(user *common.User) error {
-	// TODO: register to online service
-	return nil
-}
+func (this *App) setup(c *cli.Context) error {
+	if this.client == nil {
+		fmt.Printf("%s\n", c.String("server"))
+		this.client = api.NewClient(c.String("server"))
+	}
 
-func (this *App) setup() error {
 	if this.user == nil {
 		// try load user from config
 		if this.config != nil && this.config.CurrentUser != "" {
@@ -186,19 +188,24 @@ func (this *App) setup() error {
 		// still not found
 		if this.user == nil {
 			this.user = this.selectCurrentUser()
-			if this.user != nil {
-				// save config
-				if this.config == nil {
-					this.config = &AppConfig{
-						CurrentUser: this.user.Key,
-					}
-					this.saveConfig(this.config)
-				}
-			}
 		}
 	}
+
 	if this.user == nil {
 		return ErrNoUser
 	}
+
+	if err := this.client.Register(this.user); err != nil {
+		return err
+	}
+
+	// save config
+	if this.config == nil {
+		this.config = &AppConfig{
+			CurrentUser: this.user.Key,
+		}
+		this.saveConfig(this.config)
+	}
+
 	return nil
 }

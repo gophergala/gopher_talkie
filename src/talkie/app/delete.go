@@ -3,7 +3,7 @@ package app
 import (
 	"fmt"
 	"github.com/codegangsta/cli"
-	_ "os"
+	"os"
 )
 
 func NewDeleteCommand(this *App) cli.Command {
@@ -17,5 +17,11 @@ func NewDeleteCommand(this *App) cli.Command {
 }
 
 func (this *App) delete(c *cli.Context) {
+	if err := this.setup(c); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
+		return
+	}
 	fmt.Printf("Delete message...\n")
+
+	// TODO: need implement
 }

@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 )
 
 type Response struct {
@@ -128,7 +129,7 @@ func messages(w http.ResponseWriter, r *http.Request) {
 	// since := r.FormValue("since")
 	user, err := store.FindUserByKey(key)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusGone)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if user == nil {
@@ -162,6 +163,27 @@ func messages(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func download(w http.ResponseWriter, r *http.Request) {
+	msgID, err := strconv.ParseInt(r.FormValue("id"), 10, 4)
+	// since := r.FormValue("since")
+	msg, err := store.GetMessage(msgID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if msg == nil {
+		http.Error(w, "message not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	_, err = w.Write(msg.Content)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "talkie-server"
@@ -188,6 +210,7 @@ func main() {
 		http.HandleFunc("/register", register)
 		http.HandleFunc("/send", send)
 		http.HandleFunc("/messages", messages)
+		http.HandleFunc("/m", download)
 
 		addr := fmt.Sprintf("%s:%d", c.String("host"), c.Int("port"))
 		fmt.Printf("Listening %s...", addr)

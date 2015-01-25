@@ -25,7 +25,12 @@ func NewListCommand(app *App) cli.Command {
 }
 
 func (this *App) list(c *cli.Context) {
-	messages, err := this.store.GetUserMessages(this.user.UserID)
+	if err := this.setup(c); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
+		return
+	}
+	messages, err := this.client.GetMessages(this.user)
+	// messages, err := this.store.GetUserMessages(this.user.UserID)
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 	}
@@ -50,10 +55,19 @@ func (this *App) list(c *cli.Context) {
 				// play message at idx-1
 				m := messages[int(idx)-1]
 
+				// download content
+				if len(m.Content) == 0 {
+					m.Content, err = this.client.DownloadMessage(m.MessageID)
+					if err != nil {
+						fmt.Printf("Error download message! %s\n", err.Error())
+						continue
+					}
+				}
+
 				// decrypt content
 				content, err := crypto.GPGDecrypt(this.user.Key, bytes.NewReader(m.Content))
 				if err != nil {
-					fmt.Printf("Error decrypt message! %s", err.Error())
+					fmt.Printf("Error decrypt message! %s\n", err.Error())
 					continue
 				}
 

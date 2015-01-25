@@ -35,18 +35,18 @@ VERSION:
    0.1.0
 
 AUTHOR:
-  nklizhe@gmail.com - <unknown@email>
+  Tom Li - <nklizhe@gmail.com>
 
 COMMANDS:
-   list		list all messages
-   send		record and send a voice message
-   listen	listen messages
-   delete	delete a message
-   help, h	Shows a list of commands or help for one command
+   list   list all messages
+   send   record and send a voice message
+   help, h  Shows a list of commands or help for one command
    
 GLOBAL OPTIONS:
-   --help, -h		show help
-   --version, -v	print the version
+   --server "130.211.156.226:3333"  
+   --help, -h       show help
+   --version, -v      print the version
+   
  ```
 
 ## Build
@@ -63,3 +63,6 @@ cd gopher_talkie/
 make deps
 make
 ```
+
+## Start server
+
